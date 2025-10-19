@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲教室語詞造句翻翻牌v2.2.2</title>
+    <title>雲教室語詞造句翻翻牌v2.4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -141,14 +141,17 @@
         }
         input:checked + .toggle-slider { background-color: #2563eb; }
         input:checked + .toggle-slider:before { transform: translateX(22px); }
+        
         #aiSentenceOutput .result-item {
             background-color: white;
             padding: 1.5rem;
             border-radius: 1rem;
             margin-bottom: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+        }
+        #aiSentenceOutput .result-item-content {
+            cursor: pointer;
         }
         #aiSentenceOutput .result-item:hover {
             transform: translateY(-5px);
@@ -168,6 +171,7 @@
             font-size: 1.75rem;
             font-weight: 500;
             color: #1e293b;
+            line-height: 1.6;
         }
         .highlight-word {
             background-color: #fef9c3;
@@ -176,6 +180,33 @@
             border-radius: 3px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
+        .sentence-actions {
+            display: flex;
+            gap: 0.75rem; /* 12px */
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb; /* slate-200 */
+        }
+        .sentence-action-btn {
+            background-color: #f1f5f9; /* slate-100 */
+            color: #475569; /* slate-600 */
+            border-radius: 9999px; /* rounded-full */
+            width: 2.75rem; /* w-11 */
+            height: 2.75rem; /* h-11 */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem; /* text-xl */
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0; /* slate-200 */
+            cursor: pointer;
+        }
+        .sentence-action-btn:hover {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #1e293b; /* slate-800 */
+            transform: scale(1.05);
+        }
+        
         .ai-gen-btn {
             background: linear-gradient(135deg, #60a5fa, #818cf8);
             color: white; border: none; border-radius: 50%;
@@ -197,13 +228,126 @@
             display: flex;
             flex-direction: column;
         }
+
+        /* v2.4.0 句子重組遊戲 (Scramble Game) 樣式更新 */
+        #scrambleModal .modal-content {
+            max-width: 1000px;
+            text-align: left;
+            position: relative; 
+            transform: translate(0px, 0px) scale(0.95);
+        }
+        #scrambleModal .modal-content h3 {
+            cursor: move;
+            user-select: none;
+            padding-bottom: 1rem; 
+        }
+
+        .scramble-zone {
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        #scrambleTarget {
+            background-color: #f8fafc; /* slate-50 */
+            border: 2px dashed #cbd5e1; /* slate-300 */
+        }
+        #scrambleSource {
+            background-color: #f1f5f9; /* slate-100 */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            margin-top: 1rem;
+            min-height: 120px;
+        }
+        .scramble-block {
+            position: relative; 
+            padding: 0.75rem 1.25rem;
+            background-color: white;
+            color: #1e293b; /* slate-800 */
+            font-size: 1.25rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            cursor: grab;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .scramble-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .scramble-block.dragging {
+            opacity: 0.5;
+            background-color: #e0f2fe; /* sky-100 */
+            box-shadow: none;
+        }
+        #scrambleTarget.drag-over {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+        }
+        #scrambleTarget.is-correct {
+            border-color: #22c55e; /* green-500 */
+            border-style: solid;
+        }
+        #scrambleTarget.is-incorrect {
+            border-color: #ef4444; /* red-500 */
+            border-style: solid;
+        }
+        #scrambleHint {
+            background-color: #fffbeb; /* yellow-50 */
+            border: 1px solid #fef3c7; /* yellow-200 */
+            color: #a16207; /* yellow-700 */
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .scramble-remove-btn {
+            display: none; 
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 26px;
+            height: 26px;
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px; 
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .scramble-remove-btn:hover {
+            background-color: #dc2626; /* red-600 */
+            transform: scale(1.1);
+        }
+        #scrambleTarget .scramble-block .scramble-remove-btn {
+            display: flex;
+        }
+        #scrambleTarget .scramble-block {
+            padding-right: 1.5rem;
+        }
+
     </style>
 </head>
 <body class="bg-sky-50 min-h-screen flex items-center justify-center p-4">
 
     <div class="container mx-auto max-w-7xl">
         <header class="text-center mb-8">
-          <h1 id="headerTitle" class="text-4xl md:text-5xl font-bold text-sky-800">🎯 雲教室造句翻翻牌 v2.2.2</h1>
+          <h1 id="headerTitle" class="text-4xl md:text-5xl font-bold text-sky-800">🎯 雲教室造句翻翻牌 v2.4.1</h1>
             <p id="headerSubtitle" class="text-lg text-slate-600 mt-2">點擊卡片翻面，組合無限創意！</p>
         </header>
 
@@ -239,10 +383,11 @@
                     <button class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-full shadow-md hover:shadow-lg transition-transform transform hover:scale-105" onclick="backToSettings()">⬅️ 返回設定</button>
                     <button class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-5 rounded-full shadow-md hover:shadow-lg transition-transform transform hover:scale-105" onclick="flipAllCards()">🎲 全部翻開</button>
                     <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-full shadow-md hover:shadow-lg transition-transform transform hover:scale-105" onclick="resetAllCards()">🔄 全部重置</button>
-                </div>
+                    </div>
                 <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     </div>
-                <div id="aiSentenceOutput" class="mt-8"></div>
+                <div id="aiSentenceOutput" class="mt-8">
+                    </div>
             </div>
         </main>
     </div>
@@ -256,7 +401,7 @@
 
     <div id="customModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
         <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" style="opacity: 0;"></div>
-        <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 text-center" style="transform: scale(0.95); opacity: 0;">
+        <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 text-center" style="transform: translate(0px, 0px) scale(0.95); opacity: 0;">
             <h3 id="modalTitle" class="text-xl font-bold text-slate-800 mb-4">提示訊息</h3>
             <div id="modalMessage" class="text-slate-600 mb-6"></div>
             <div id="modalActions" class="flex justify-center gap-4"></div>
@@ -270,7 +415,6 @@
                 <h3 class="text-2xl font-bold text-slate-800">🤖 AI 造句改寫</h3>
                 <button onclick="closeAiModal()" class="text-3xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
             </div>
-            
             <div>
                 <label class="form-label">1. 勾選詞語 (已隨機預選1個，用於句型/造句)：</label>
                 <div id="aiWordSelection" class="form-checkbox-group"></div>
@@ -282,7 +426,6 @@
                 </select>
                 <textarea id="aiPatternInput" class="form-textarea" rows="2" placeholder="或在此手動輸入短語、句型、關鍵詞..."></textarea>
             </div>
-
             <div class="mt-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -320,7 +463,6 @@
                     </div>
                 </div>
             </div>
-
             <button id="aiGenerateBtn" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 mt-4" onclick="handleGenerateSentences()">🚀 產生句子</button>
         </div>
     </div>
@@ -332,7 +474,6 @@
                 <h3 class="text-2xl font-bold text-slate-800">🔬 AI 分析句型/語詞</h3>
                 <button onclick="closeAnalysisModal()" class="text-3xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 <div class="analysis-section h-full">
                     <div class="flex justify-between items-center">
@@ -361,15 +502,48 @@
             <button id="analysisRunBtn" class="w-full bg-gradient-to-r from-sky-500 to-cyan-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all mt-4" onclick="handleRunAnalysis()">🤖 開始分析</button>
         </div>
     </div>
+    
+    <div id="scrambleModal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" onclick="closeScrambleGame()"></div>
+        <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full p-6 space-y-4 overflow-y-auto max-h-[95vh]">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-slate-800 flex-grow">🧩 句子重組遊戲</h3>
+                <button onclick="closeScrambleGame()" class="text-3xl font-bold text-gray-500 hover:text-gray-800 flex-shrink-0">&times;</button>
+            </div>
+            
+            <div>
+                <label class="form-label">1. 作答區 (請將下方方塊拖曳至此處排列)</label>
+                <div id="scrambleTarget" class="scramble-zone">
+                    </div>
+            </div>
+            
+            <div>
+                <label class="form-label">2. 語料庫 (可拖曳的方塊)</label>
+                <div id="scrambleSource" class="scramble-zone">
+                    </div>
+            </div>
+            
+            <div id="scrambleHint" class="hidden"></div>
+            
+            <div class="flex flex-wrap justify-center gap-4 pt-4 border-t">
+                <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-full" onclick="checkScrambleAnswer()">✔️ 檢查答案</button>
+                <button class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-5 rounded-full" onclick="resetScrambleGame()">🔄 重新開始</button>
+                <button class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-5 rounded-full" onclick="toggleScrambleHint()">💡 查看提示</button>
+                <button class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-5 rounded-full" onclick="closeScrambleGame()">🚪 關閉遊戲</button>
+            </div>
+        </div>
+    </div>
 
 
     <audio id="flipSound" src="https://taira-komori.net/sound_os2/game01/button01a.mp3" preload="auto"></audio>
 
 <script>
+    // v2.4.1 修正語法錯誤
     const defaultCards = [
         { id: 'person', title: '📌 什麼人物', color: 'bg-rose-400', backColor: 'bg-rose-100', content: ['大雄', '胖虎', '靜香', '哆啦A夢', '小夫', '哥哥', '春天', '皇帝', '員工', '爸爸', '校長', '主任', '老師', '媽媽', '學生', '朋友', '司機', '郵差', '狗狗', '貓咪', '太陽', '月亮', '風', '雨', '電風扇', '火車', '飛機', '椅子', '手機', '書本'], type: 'text' },
         { id: 'time', title: '🕒 什麼時間', color: 'bg-amber-400', backColor: 'bg-amber-100', content: ['早上', '中午', '晚上', '清晨', '半夜', '放學後', '吃飽後', '起床後', '睡覺前', '下課時', '上課時', '假日', '週末', '星期一', '星期五', '寒假', '暑假', '春天', '夏天', '秋天', '冬天', '今天', '昨天', '明天', '剛才', '等一下', '每天', '平常', '早自習', '運動時間'], type: 'text' },
         { id: 'place', title: '📍 什麼地點', color: 'bg-lime-500', backColor: 'bg-lime-100', content: ['公園', '操場', '馬路上', '教室裡', '圖書館', '家裡', '學校', '便利商店', '超市', '餐廳', '廚房', '浴室', '操場邊', '走廊上', '醫院', '車站', '電影院', '百貨公司', '山上', '海邊', '河邊', '動物園', '博物館', '教堂', '校門口', '教務處', '辦公室', '音樂教室', '美術教室', '電腦教室'], type: 'text' },
+        // v2.4.1 修正：將 "type:D:" 修正為 "type:"
         { id: 'action', title: '🏃 什麼動作', color: 'bg-cyan-400', backColor: 'bg-cyan-100', content: ['舉手', '吐舌頭', '拿', '跑', '跳', '笑', '哭', '說話', '打開', '關門', '吃', '喝', '寫字', '畫畫', '唱歌', '打掃', '睡覺', '洗手', '刷牙', '閱讀', '走路', '打球', '丟球', '踢球', '玩耍', '搬東西', '排隊', '點頭', '搖頭', '伸懶腰'], type: 'text' },
         { id: 'event', title: '📖 什麼事情', color: 'bg-violet-400', backColor: 'bg-violet-100', content: ['扮鬼臉', '看書', '跑步', '野餐', '寫功課', '打掃教室', '做實驗', '參加比賽', '幫忙做家事', '玩桌遊', '開會', '舉辦活動', '練習鋼琴', '畫畫', '聽故事', '排隊買東西', '參觀博物館', '考試', '參加早自習', '種花', '澆水', '唱歌表演', '做點心', '露營', '午休', '看電影', '買文具', '騎腳踏車', '做勞作', '上體育課'], type: 'text' },
         { id: 'story', title: '🖼️ 故事卡', color: 'bg-slate-500', backColor: 'bg-slate-200', content: ['https://drive.google.com/thumbnail?sz=w640-h480&id=1dvhq1pscpIJ_fa3E1FM-TEsDiaCGdPDS', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1JyQmlgm2Q2aTy9v5IqaKiqnKrO9ZhzLL', 'https://drive.google.com/thumbnail?sz=w640-h480&id=158-D8boZBhyjCpG-5mB8LlPTbwowP9aI', 'https://drive.google.com/thumbnail?sz=w640-h480&id=16Eg2us4EyhBJkMzkZxmg3u-gf_ctzIS6', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1ZeOc41lClAwaq-9wqFo1o7zQl3o7OJAc', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1w5E17GWnI0tsgHWKM5OUAr7jCKpweU6K', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1EaNhjtbsy0D4SjuuimW6otN2yz5xReS9', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1LDthe2VxEMhGEiqLni_MeQlGdZPbJu_l', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1AsOm5YUKMNLvuU-P5pr1SDZKicBj195l', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1v2ADBteUtvqrdtwQ3_Ywxt0sXia56Ik9', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1QnCwCIBfeJB16pO5ObseonXJ-zwxPgir', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1IWU2-G4L3dTB8x0z9L9ZYhChNrVZW8RG', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1_HBCm2uGrVEqRKxgJxGwevVGhdSfCNVn', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1lM-eCzJKpBflND0JLFzUblXfVfcfuCd8', 'https://drive.google.com/thumbnail?sz=w640-h480&id=14KSvym3_7L4ojcajZ8axa26eD3KUJMnf', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1GBgfQJ0L5w6bkdvGunUj_Vp1_oajD85S', 'https://drive.google.com/thumbnail?sz=w640-h480&id=17mWFv08uM2kTSOEp8R8SkZBZImK-yiVC', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1z9IvfUJr7Wtm9qVzVt0f0PebB3tmU8q1', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1l9EhAq7hl2a_x1_mMBZT961dB6FguILC', 'https://drive.google.com/thumbnail?sz=w640-h480&id=19BSCVubv3klb_q3hfBltXRurIXWCjHT8'], type: 'image' },
@@ -388,7 +562,13 @@
     const modalMessage = document.getElementById('modalMessage');
     const modalActions = document.getElementById('modalActions');
     const analysisModal = document.getElementById('analysisModal');
+    
+    const scrambleModal = document.getElementById('scrambleModal');
+    let currentScrambleSentence = '';
+    let currentScramblePattern = '';
+    let correctScrambleBlocks = [];
 
+    // --- 資料存取 (v2.4.1 無變動) ---
     function saveDataToLocal() {
         try {
             localStorage.setItem('sentenceFlipCardData_v2_0', JSON.stringify(cardsData));
@@ -425,6 +605,7 @@
         showAlert('已清除暫存的分析資料。');
     }
 
+    // --- Modal 顯示/隱藏 (v2.4.1 無變動) ---
     function showModal(modalElement) {
         modalElement.classList.remove('hidden');
         modalElement.classList.add('flex');
@@ -433,7 +614,9 @@
         setTimeout(() => {
             if(backdrop) backdrop.style.opacity = '1';
             if(content) {
-                content.style.transform = 'scale(1)';
+                content.dataset.posX = 0;
+                content.dataset.posY = 0;
+                content.style.transform = 'translate(0px, 0px) scale(1)';
                 content.style.opacity = '1';
             }
         }, 10);
@@ -444,13 +627,20 @@
         const content = modalElement.querySelector('.modal-content');
         if(backdrop) backdrop.style.opacity = '0';
         if(content) {
-            content.style.transform = 'scale(0.95)';
+            const currentX = content.dataset.posX || 0;
+            const currentY = content.dataset.posY || 0;
+            content.style.transform = `translate(${currentX}px, ${currentY}px) scale(0.95)`;
             content.style.opacity = '0';
         }
         setTimeout(() => {
             modalElement.classList.add('hidden');
             modalElement.classList.remove('flex');
-            if(content && !content.closest('#analysisModal')) {
+            
+            if (modalElement.id === 'customModal') {
+                modalElement.style.zIndex = '60';
+            }
+
+            if(content && !content.closest('#analysisModal') && !content.closest('#scrambleModal')) {
                 content.classList.remove('max-w-2xl', 'max-w-4xl');
                 content.classList.add('max-w-md');
             }
@@ -458,13 +648,29 @@
     }
     
     function showAlert(message, title = '✅ 操作成功') {
+        const scrambleModal = document.getElementById('scrambleModal');
+        if (!scrambleModal.classList.contains('hidden')) {
+            customModal.style.zIndex = '80'; 
+        } else {
+            customModal.style.zIndex = '60'; 
+        }
+
         modalTitle.textContent = title;
         modalMessage.innerHTML = `<p class="text-slate-600">${message}</p>`;
         modalActions.innerHTML = `<button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full" onclick="hideModal(customModal)">確認</button>`;
+        modalContent.classList.remove('max-w-2xl', 'max-w-4xl');
+        modalContent.classList.add('max-w-md');
         showModal(customModal);
     }
 
     function showConfirm(message, onConfirm, title = '❓ 請確認') {
+        const scrambleModal = document.getElementById('scrambleModal');
+        if (!scrambleModal.classList.contains('hidden')) {
+            customModal.style.zIndex = '80';
+        } else {
+            customModal.style.zIndex = '60';
+        }
+
         modalTitle.textContent = title;
         modalMessage.innerHTML = `<p class="text-slate-600">${message}</p>`;
         modalActions.innerHTML = `
@@ -475,9 +681,12 @@
             hideModal(customModal);
             onConfirm();
         };
+        modalContent.classList.remove('max-w-2xl', 'max-w-4xl');
+        modalContent.classList.add('max-w-md');
         showModal(customModal);
     }
     
+    // --- 設定頁面 (v2.4.1 無變動) ---
     function renderEditSection() {
         const editSection = document.getElementById('editSection');
         editSection.innerHTML = '';
@@ -562,6 +771,7 @@
         });
     }
 
+    // --- 遊戲頁面 (v2.4.1 無變動) ---
     function renderGameCards() {
         const cardsGrid = document.getElementById('cardsGrid');
         cardsGrid.innerHTML = '';
@@ -701,7 +911,7 @@
     function backToSettings() {
         document.getElementById('gamePage').classList.remove('active');
         document.getElementById('settingsPage').classList.add('active');
-        document.getElementById('headerSubtitle').textContent = '設定您的翻翻牌內容 (設定會自動儲存)';
+        document.getElementById('headerSubtitle').textContent = '點擊卡片翻面，組合無限創意！';
         renderEditSection();
     }
     
@@ -727,50 +937,41 @@
     }
 
     function importSettings(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const settings = JSON.parse(e.target.result);
-
-            // 【v2.1.2 修正】建立一個更嚴格的檢查函式，確保匯入的資料結構完全正確
-            const isValidCardsData = (data) => {
-                // 檢查基本條件：必須是一個非空的陣列
-                if (!data || !Array.isArray(data)) return false;
-
-                // 檢查陣列中的 "每一個" 卡片物件是否都符合規範
-                return data.every(card =>
-                    typeof card === 'object' && card !== null &&
-                    typeof card.id === 'string' &&
-                    typeof card.title === 'string' &&
-                    Array.isArray(card.content) &&
-                    // 順便檢查 content 陣列中的項目是否都是字串，更加保險
-                    card.content.every(item => typeof item === 'string') &&
-                    typeof card.type === 'string' &&
-                    ['text', 'image', 'pattern'].includes(card.type)
-                );
-            };
-
-            // 使用新的、更嚴格的檢查函式進行驗證
-            if (settings && isValidCardsData(settings.cardsData)) {
-                cardsData = settings.cardsData;
-                saveDataToLocal(); // 只有在確認資料無誤後才儲存
-                renderEditSection();
-                showAlert('設定檔匯入成功！設定已自動儲存。');
-            } else {
-                // 如果檢查不通過，提供更詳細的錯誤訊息
-                showAlert('設定檔格式錯誤或缺少必要欄位！請確認檔案來源是否正確，或檔案內容是否損毀。', '❌ 匯入失敗');
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const settings = JSON.parse(e.target.result);
+                const isValidCardsData = (data) => {
+                    if (!data || !Array.isArray(data)) return false;
+                    return data.every(card =>
+                        typeof card === 'object' && card !== null &&
+                        typeof card.id === 'string' &&
+                        typeof card.title === 'string' &&
+                        Array.isArray(card.content) &&
+                        card.content.every(item => typeof item === 'string') &&
+                        typeof card.type === 'string' &&
+                        ['text', 'image', 'pattern'].includes(card.type)
+                    );
+                };
+                if (settings && isValidCardsData(settings.cardsData)) {
+                    cardsData = settings.cardsData;
+                    saveDataToLocal(); 
+                    renderEditSection();
+                    showAlert('設定檔匯入成功！設定已自動儲存。');
+                } else {
+                    showAlert('設定檔格式錯誤或缺少必要欄位！請確認檔案來源是否正確，或檔案內容是否損毀。', '❌ 匯入失敗');
+                }
+            } catch (error) {
+                showAlert(`設定檔讀取或解析失敗！請確認這是一個有效的 JSON 檔案。\n錯誤訊息：${error.message}`, '❌ 匯入失敗');
             }
-        } catch (error) {
-            // 如果連 JSON 解析都失敗，也提供詳細錯誤
-            showAlert(`設定檔讀取或解析失敗！請確認這是一個有效的 JSON 檔案。\n錯誤訊息：${error.message}`, '❌ 匯入失敗');
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = ''; // 重置 input，以便下次能選擇同一個檔案
-}
+        };
+        reader.readAsText(file);
+        event.target.value = ''; 
+    }
     
+    // --- AI 造句 Modal (v2.4.1 無變動) ---
     const aiModal = document.getElementById('aiModal');
 
     function toggleStoryDescription(checkboxId) {
@@ -828,6 +1029,7 @@
 
     function closeAiModal() { hideModal(aiModal); }
     
+    // --- 語音朗讀 (v2.4.1 無變動) ---
     function speakText(text, targetElementId) {
         if (!speechSynth) {
             showAlert('您的瀏覽器不支援語音朗讀功能。', '❌ 功能不支援');
@@ -869,6 +1071,7 @@
         speechSynth.speak(utterance);
     }
 
+    // --- 句子放大 Modal (v2.4.1 無變動) ---
     function showSentenceModal(sentence, pattern) {
         modalTitle.textContent = '🔍 詳細句子';
         let messageHtml = '';
@@ -876,142 +1079,149 @@
             messageHtml += `<div class="sentence-pattern">格式：【${pattern}】</div>`;
         }
         const escapedSentence = sentence.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+        const escapedPattern = pattern.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
         const sentenceId = `modal-sentence-${Date.now()}`;
+        
         messageHtml += `
             <div class="flex items-start gap-4 pt-4">
                 <p id="${sentenceId}" class="flex-grow text-2xl md:text-3xl font-semibold leading-relaxed text-left">${sentence}</p>
-                <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="flex-shrink-0 bg-sky-100 hover:bg-sky-200 text-sky-600 rounded-full w-12 h-12 flex items-center justify-center transition-colors text-2xl" title="朗讀句子">🔊</button>
+                <div class="flex flex-col gap-3 flex-shrink-0">
+                    <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="sentence-action-btn" title="朗讀句子">🔊</button>
+                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                </div>
             </div>
         `;
         modalMessage.innerHTML = messageHtml;
         modalActions.innerHTML = `<button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full" onclick="hideModal(customModal)">關閉</button>`;
         modalContent.classList.remove('max-w-md');
-        modalContent.classList.add('max-w-4xl');
+        modalContent.classList.add('max-w-4xl'); 
         showModal(customModal);
     }
     
-async function handleGenerateSentences() {
-    const sentenceOutput = document.getElementById('aiSentenceOutput');
-    const generateBtn = document.getElementById('aiGenerateBtn');
+    // --- AI 核心 (v2.4.1 無變動) ---
+    async function handleGenerateSentences() {
+        const sentenceOutput = document.getElementById('aiSentenceOutput');
+        const generateBtn = document.getElementById('aiGenerateBtn');
 
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = `🧠 思考中... <svg class="animate-spin -mr-1 ml-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `🧠 思考中... <svg class="animate-spin -mr-1 ml-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
 
-    const patternInput = document.getElementById('aiPatternInput').value.trim();
-    const patternSelect = document.getElementById('aiPatternSelect').value;
-    const finalPattern = patternInput || patternSelect;
+        const patternInput = document.getElementById('aiPatternInput').value.trim();
+        const patternSelect = document.getElementById('aiPatternSelect').value;
+        const finalPattern = patternInput || patternSelect;
 
-    // ==================================================================
-    // 【AI 提示詞修改核心區域 v2.2.2】
-    // 結合了 v2.1 的判斷邏輯與 v2.2 的造句邏輯，並強化短語仿寫功能
-    // ==================================================================
-    let prompt = '';
-    const selectedWords = [];
-    document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
-        if (cb.dataset.type !== 'image') {
-            selectedWords.push(cb.dataset.content);
-        }
-    });
-
-    // 模式1：檢查是否為「短語仿寫」(照樣造句) 模式
-    if ( (finalPattern.includes('(') && finalPattern.includes(')')) || (finalPattern.includes('（') && finalPattern.includes('）')) ) {
-
-        prompt = `你是一位專門指導國小學生進行「短語仿寫」的中文老師。你的任務是嚴格依照以下範本短語進行仿寫，並產生 3 個符合規則的結果。\n\n**範本短語：**\n"${finalPattern}"`;
-
-        // 【v2.2.2 修改重點】如果使用者有勾選語詞，就將語詞加入到指令中
-        if (selectedWords.length > 0) {
-            prompt += `\n\n**指定語詞 (必須使用)：**\n請務必在你的仿寫結果中，三句至少有一句使用一個來自清單【${selectedWords.join('、')}】中的有勾選的語詞來替換括號內的內容。(請在語詞通順的許可下，盡量使用勾選的語詞進行照樣造句)`;
-        }
-
-        prompt += `\n\n**仿寫規則 (極重要，必須嚴格遵守)：**\n1.  **僅替換詞語：** 你的回覆中，絕對只能替換全形括號「（）」或半形括號 "()" 內的詞語。\n2.  **保留結構：** 括號外的所有文字、符號都必須一字不改地保留在原位。\n3.  **詞性與長度相近：** 替換進括號的新詞語，應和括號內原詞語的「詞性」與「字數」盡量相同，且符合整體句子的前後語意，名詞對應的量詞，還有整體的語句都要符合語詞結構，且有明確意思的句子。\n4.  **保留括號：** 最終輸出的所有仿寫短語都必須保留括號。\n\n**輸出要求：**\n請直接提供三個仿寫短語，每個短語一行，不要包含編號、標題或任何其他說明文字。`;
-    } 
-    // 模式2：如果不是，則進入標準的「語詞/句型造句」模式
-    else {
-        const imageDescriptions = [];
+        let prompt = '';
+        const selectedWords = [];
         document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
-            if (cb.dataset.type === 'image') {
-                const desc = document.getElementById(`desc-${cb.id}`)?.value.trim();
-                if (desc) imageDescriptions.push(desc);
+            if (cb.dataset.type !== 'image') {
+                selectedWords.push(cb.dataset.content);
             }
         });
 
-        if (selectedWords.length === 0 && !finalPattern) {
-            showAlert('請至少勾選一個語詞，或指定一個句型！', '🤔 請提供造句素材');
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '🚀 產生句子';
-            return; // 終止函式執行
-        }
-
-        const style = document.getElementById('aiStyleSelect').value;
-        const gradeLevel = document.querySelector('input[name="grade"]:checked').value;
-        const wordCount = document.querySelector('input[name="wordCount"]:checked').value;
-        const gradeMap = { low: '低年級', middle: '中年級', high: '高年級' };
-        const targetAudience = gradeMap[gradeLevel];
-
-        prompt = `你是一位「國小造句高手老師」，專門指導 10-12 歲的小學生練習造句。你熟悉國語文教學，擅長以生活化、具啟發性的例句，幫助學生理解並正確運用短語、句型與語詞。造句時會使用常見的語詞，避免生僻的語詞用法，句子生活化，可以讓小學生很好理解。\n\n`;
-        prompt += `**任務：** 請根據以下「核心元素」與「輔助設定」，創作 3 個通順且高品質的例句。\n\n`;
-
-        prompt += `--- 核心元素 (必須嚴格遵守) ---\n`;
-        if (selectedWords.length > 0) {
-            prompt += `**必須使用的語詞：** "${selectedWords.join('", "')}"\n`;
-        }
-        if (finalPattern) {
-            const patternType = (finalPattern.includes('...')) ? '句型' : '關鍵詞';
-            prompt += `**參考的${patternType}：** "${finalPattern}"\n`;
-        }
-        if (imageDescriptions.length > 0) {
-            prompt += `**需融入的情境：** "${imageDescriptions.join('", "')}"\n`;
-        }
-
-        prompt += `\n--- 輔助設定 ---\n`;
-        prompt += `**目標年級：** 國小${targetAudience}\n`;
-        prompt += `**句子風格：** ${style}\n`;
-        if (wordCount !== 'unlimited') {
-            switch (wordCount) {
-                case '15-30': prompt += `**字數要求：** 每個句子長度約 15 到 30 個字。\n`; break;
-                case '30+': prompt += `**字數要求：** 每個句子長度 30 個字以上。\n`; break;
+        if ( (finalPattern.includes('(') && finalPattern.includes(')')) || (finalPattern.includes('（') && finalPattern.includes('）')) ) {
+            prompt = `你是一位專門指導國小學生進行「短語仿寫」的中文老師。你的任務是嚴格依照以下範本短語進行仿寫，並產生 3 個符合規則的結果。\n\n**範本短語：**\n"${finalPattern}"`;
+            if (selectedWords.length > 0) {
+                prompt += `\n\n**指定語詞 (必須使用)：**\n請務必在你的仿寫結果中，三句至少有一句使用一個來自清單【${selectedWords.join('、')}】中的有勾選的語詞來替換括號內的內容。(請在語詞通順的許可下，盡量使用勾選的語詞進行照樣造句)`;
             }
-        }
+            prompt += `\n\n**仿寫規則 (極重要，必須嚴格遵守)：**\n1.  **僅替換詞語：** 你的回覆中，絕對只能替換全形括號「（）」或半形括號 "()" 內的詞語。\n2.  **保留結構：** 括號外的所有文字、符號都必須一字不改地保留在原位。\n3.  **詞性與長度相近：** 替換進括號的新詞語，應和括號內原詞語的「詞性」與「字數」盡量相同，且符合整體句子的前後語意，名詞對應的量詞，還有整體的語句都要符合語詞結構，且有明確意思的句子。\n4.  **保留括號：** 最終輸出的所有仿寫短語都必須保留括號。\n\n**輸出要求：**\n請直接提供三個仿寫短語，每個短語一行，不要包含編號、標題或 any other 說明文字。`;
+        } 
+        else {
+            const imageDescriptions = [];
+            document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
+                if (cb.dataset.type === 'image') {
+                    const desc = document.getElementById(`desc-${cb.id}`)?.value.trim();
+                    if (desc) imageDescriptions.push(desc);
+                }
+            });
 
-        prompt += `\n--- 行為準則 (極重要！) ---\n`;
-        prompt += `1. **準確性 (最重要)：** 你的造句「必須」完整包含「必須使用的語詞」清單中的「所有」詞語。如果沒有「必須使用的語詞」，則必須正確使用「參考的句型」或圍繞「參考的關鍵詞」來造句。\n`;
-        prompt += `2. **語感自然、貼近生活：** 句子要像國小${targetAudience}學生會說或寫的話，避免艱深詞彙或成人語氣。\n`;
-        prompt += `3. **內容正面、具啟發性：** 句子內容應盡量正面、生活化、有意義。\n`;
+            if (selectedWords.length === 0 && !finalPattern) {
+                showAlert('請至少勾選一個語詞，或指定一個句型！', '🤔 請提供造句素材');
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🚀 產生句子';
+                return; 
+            }
 
-        prompt += `\n**輸出要求：** 請直接提供三個句子，每個句子以換行符號分隔，不要包含編號、標題或任何其他額外文字。`;
-    }
-    // ==================================================================
-    // 【AI 提示詞修改核心區域結束】
-    // ==================================================================
+            const style = document.getElementById('aiStyleSelect').value;
+            const gradeLevel = document.querySelector('input[name="grade"]:checked').value;
+            const wordCount = document.querySelector('input[name="wordCount"]:checked').value;
+            const gradeMap = { low: '低年級', middle: '中年級', high: '高年級' };
+            const targetAudience = gradeMap[gradeLevel];
 
-    try {
-        const resultText = await callGeminiApi(prompt);
-        const sentences = resultText.split('\n').filter(s => s.trim() !== '');
+            prompt = `你是一位「國小造句高手老師」，專門指導 10-12 歲的小學生練習造句。你熟悉國語文教學，擅長以生活化、具啟發性的例句，幫助學生理解並正確運用短語、句型與語詞。造句時會使用常見的語詞，避免生僻的語詞用法，句子生活化，可以讓小學生很好理解。\n\n`;
+            prompt += `**任務：** 請根據以下「核心元素」與「輔助設定」，創作 3 個通順且高品質的例句。\n\n`;
 
-        closeAiModal();
-        sentenceOutput.innerHTML = `<h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">✨ AI 造句結果 (點擊可放大) ✨</h3>`;
-        sentences.forEach(sentence => {
-            const resultItem = document.createElement('div');
-            resultItem.className = 'result-item';
-            let itemHtml = '';
+            prompt += `--- 核心元素 (必須嚴格遵守) ---\n`;
+            if (selectedWords.length > 0) {
+                prompt += `**必須使用的語詞：** "${selectedWords.join('", "')}"\n`;
+            }
             if (finalPattern) {
-                itemHtml += `<div class="sentence-pattern">格式：【${finalPattern}】</div>`;
+                const patternType = (finalPattern.includes('...')) ? '句型' : '關鍵詞';
+                prompt += `**參考的${patternType}：** "${finalPattern}"\n`;
             }
-            itemHtml += `<div class="sentence-text">${sentence}</div>`;
-            resultItem.innerHTML = itemHtml;
-            resultItem.onclick = () => showSentenceModal(sentence, finalPattern);
-            sentenceOutput.appendChild(resultItem);
-        });
-        sentenceOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (imageDescriptions.length > 0) {
+                prompt += `**需融入的情境：** "${imageDescriptions.join('", "')}"\n`;
+            }
 
-    } catch (error) {
-        showAlert(`糟糕！AI 造句失敗了：${error.message}`, '❌ 錯誤');
-    } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = '🚀 重新產生';
+            prompt += `\n--- 輔助設定 ---\n`;
+            prompt += `**目標年級：** 國小${targetAudience}\n`;
+            prompt += `**句子風格：** ${style}\n`;
+            if (wordCount !== 'unlimited') {
+                switch (wordCount) {
+                    case '15-30': prompt += `**字數要求：** 每個句子長度約 15 到 30 個字。\n`; break;
+                    case '30+': prompt += `**字數要求：** 每個句子長度 30 個字以上。\n`; break;
+                }
+            }
+
+            prompt += `\n--- 行為準則 (極重要！) ---\n`;
+            prompt += `1. **準確性 (最重要)：** 你的造句「必須」完整包含「必須使用的語詞」清單中的「所有」詞語。如果沒有「必須使用的語詞」，則必須正確使用「參考的句型」或圍繞「參考的關鍵詞」來造句。\n`;
+            prompt += `2. **語感自然、貼近生活：** 句子要像國小${targetAudience}學生會說或寫的話，避免艱深詞彙或成人語氣。\n`;
+            prompt += `3. **內容正面、具啟發性：** 句子內容應盡量正面、生活化、有意義。\n`;
+            prompt += `\n**輸出要求：** 請直接提供三個句子，每個句子以換行符號分隔，不要包含編號、標題或任何其他額外文字。`;
+        }
+
+        try {
+            const resultText = await callGeminiApi(prompt);
+            const sentences = resultText.split('\n').filter(s => s.trim() !== '');
+
+            closeAiModal();
+            sentenceOutput.innerHTML = `<h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">✨ AI 造句結果 (點擊可放大) ✨</h3>`;
+            
+            sentences.forEach((sentence, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                const escapedSentence = sentence.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+                const escapedPattern = finalPattern.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+                const sentenceId = `sentence-output-${index}`;
+
+                let itemHtml = '';
+                
+                itemHtml += `<div class="result-item-content" onclick="showSentenceModal('${escapedSentence}', '${escapedPattern}')">`;
+                if (finalPattern) {
+                    itemHtml += `<div class="sentence-pattern">格式：【${finalPattern}】</div>`;
+                }
+                itemHtml += `<div id="${sentenceId}" class="sentence-text">${sentence}</div>`;
+                itemHtml += `</div>`;
+                
+                itemHtml += `<div class="sentence-actions">
+                    <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="sentence-action-btn" title="朗讀句子">🔊</button>
+                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                </div>`;
+                
+                resultItem.innerHTML = itemHtml;
+                sentenceOutput.appendChild(resultItem);
+            });
+            sentenceOutput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } catch (error) {
+            showAlert(`糟糕！AI 造句失敗了：${error.message}`, '❌ 錯誤');
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🚀 重新產生';
+        }
     }
-}
     
+    // --- AI 詞彙生成 (v2.4.1 無變動) ---
     async function handleAiWordGeneration(cardId) {
         const card = cardsData.find(c => c.id === cardId);
         if (!card) return;
@@ -1041,6 +1251,7 @@ async function handleGenerateSentences() {
         });
     }
 
+    // --- AI 分析 Modal (v2.4.1 無變動) ---
     function openAnalysisModal() {
         loadAnalysisDataFromLocal();
         const importSelect = document.getElementById('analysisImportSelect');
@@ -1169,6 +1380,7 @@ ${sourceText}`;
         });
     }
     
+    // --- Gemini API 呼叫 (v2.4.1 無變動) ---
     async function callGeminiApi(prompt) {
         const apiKey = document.getElementById('apiKeyInput').value.trim();
         
@@ -1200,7 +1412,274 @@ ${sourceText}`;
         }
     }
 
+    // --- 可拖曳的 Modal (v2.4.1 無變動) ---
+    function makeModalDraggable(modalId, headerSelector) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        const modalContent = modal.querySelector('.modal-content');
+        const header = modal.querySelector(headerSelector);
+        
+        if (!modalContent || !header) return;
+
+        let isDragging = false;
+        let initialMouseX, initialMouseY;
+        let currentPosX = 0, currentPosY = 0;
+
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const dx = e.clientX - initialMouseX;
+            const dy = e.clientY - initialMouseY;
+            
+            const newPosX = currentPosX + dx;
+            const newPosY = currentPosY + dy;
+            
+            modalContent.style.transform = `translate(${newPosX}px, ${newPosY}px) scale(1)`;
+        };
+
+        const onMouseUp = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const dx = e.clientX - initialMouseX;
+            const dy = e.clientY - initialMouseY;
+            
+            currentPosX += dx;
+            currentPosY += dy;
+            
+            modalContent.dataset.posX = currentPosX;
+            modalContent.dataset.posY = currentPosY;
+            
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            
+            e.preventDefault();
+            isDragging = true;
+            
+            initialMouseX = e.clientX;
+            initialMouseY = e.clientY;
+            
+            currentPosX = parseFloat(modalContent.dataset.posX) || 0;
+            currentPosY = parseFloat(modalContent.dataset.posY) || 0;
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
+
+    // --- 句子重組遊戲 (v2.4.1 無變動) ---
+
+    function escapeRegExp(string) {
+        return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    }
+
+    function splitSentence(sentence, pattern) {
+        let blocks = [];
+        const basePunctuation = '，。？！、：；';
+        const bracketPunctuation = '「」『』（）()';
+        const punctuationRegex = new RegExp(`([${escapeRegExp(basePunctuation + bracketPunctuation)}])`, 'g');
+        const finalPunctuationRegex = new RegExp(`[${escapeRegExp('。？！')}]$`);
+        
+        if (pattern && (pattern.includes('(') || pattern.includes('（'))) {
+            blocks = sentence.split(/([（）()])/g).filter(s => s.trim() !== '');
+            
+        } else if (pattern && pattern.includes('...')) {
+            let keywords = pattern.split('...').filter(s => s.trim() !== '');
+            let allSeparators = [...keywords, ...basePunctuation.split('')];
+            let uniqueSeparators = [...new Set(allSeparators)];
+            let regex = new RegExp(`(${uniqueSeparators.map(escapeRegExp).join('|')})`, 'g');
+            blocks = sentence.split(regex).filter(s => s.trim() !== '');
+            
+        } else {
+            blocks = sentence.split(punctuationRegex).filter(s => s.trim() !== '');
+        }
+
+        let finalBlocks = [];
+        for (let block of blocks) {
+            if (!punctuationRegex.test(block) && finalPunctuationRegex.test(block)) {
+                finalBlocks.push(block.slice(0, -1));
+                finalBlocks.push(block.slice(-1));
+            } else {
+                finalBlocks.push(block);
+            }
+        }
+        
+        return finalBlocks.filter(s => s.trim() !== '');
+    }
+
+    function openScrambleGame(sentence, pattern) {
+        currentScrambleSentence = sentence;
+        currentScramblePattern = pattern;
+        correctScrambleBlocks = splitSentence(sentence, pattern);
+        
+        let shuffledBlocks = [...correctScrambleBlocks].sort(() => Math.random() - 0.5);
+
+        const sourceContainer = document.getElementById('scrambleSource');
+        const targetContainer = document.getElementById('scrambleTarget');
+        const hintBox = document.getElementById('scrambleHint');
+
+        sourceContainer.innerHTML = '';
+        targetContainer.innerHTML = '';
+        targetContainer.classList.remove('is-correct', 'is-incorrect');
+        hintBox.classList.add('hidden');
+        hintBox.textContent = '';
+
+        shuffledBlocks.forEach((blockText, index) => {
+            const block = document.createElement('div');
+            block.id = `scramble-block-${index}`;
+            block.className = 'scramble-block';
+            block.draggable = true;
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = blockText;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'scramble-remove-btn';
+            removeBtn.innerHTML = '&times;'; 
+            removeBtn.title = '移回語料庫';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation(); 
+                handleRemoveBlock(block); 
+            };
+            
+            block.appendChild(textSpan);
+            block.appendChild(removeBtn);
+            
+            block.addEventListener('dragstart', handleDragStart);
+            block.addEventListener('dragend', handleDragEnd);
+            
+            sourceContainer.appendChild(block);
+        });
+
+        showModal(scrambleModal);
+    }
+    
+    function handleRemoveBlock(blockElement) {
+        const sourceContainer = document.getElementById('scrambleSource');
+        sourceContainer.appendChild(blockElement);
+    }
+
+    function closeScrambleGame() {
+        hideModal(scrambleModal);
+    }
+    
+    function resetScrambleGame() {
+        openScrambleGame(currentScrambleSentence, currentScramblePattern);
+    }
+    
+    function checkScrambleAnswer() {
+        const targetContainer = document.getElementById('scrambleTarget');
+        const answerBlocks = Array.from(targetContainer.querySelectorAll('.scramble-block span'));
+        const userAnswer = answerBlocks.map(span => span.textContent).join('');
+        
+        targetContainer.classList.remove('is-correct', 'is-incorrect');
+
+        if (userAnswer === currentScrambleSentence) {
+            targetContainer.classList.add('is-correct');
+            showAlert('太棒了！句子完全正確！', '✔️ 答對了');
+        } else {
+            targetContainer.classList.add('is-incorrect');
+            showAlert('差一點點，再試試看！', '❌ 再加油');
+        }
+    }
+    
+    function toggleScrambleHint() {
+        const hintBox = document.getElementById('scrambleHint');
+        if (hintBox.classList.contains('hidden')) {
+            hintBox.textContent = `💡 提示：${currentScrambleSentence}`;
+            hintBox.classList.remove('hidden');
+        } else {
+            hintBox.classList.add('hidden');
+        }
+    }
+
+    // --- 拖曳 (Drag & Drop) 邏輯 (v2.4.1 無變動) ---
+    
+    let draggingElement = null;
+    
+    function handleDragStart(e) {
+        if (e.target.classList.contains('scramble-remove-btn')) {
+            e.preventDefault();
+            return;
+        }
+        draggingElement = e.target;
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+        e.dataTransfer.setData('text/plain', e.target.id);
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+        if (!draggingElement) return;
+        draggingElement.classList.remove('dragging');
+        draggingElement = null;
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); 
+        if (!draggingElement) return;
+        
+        const container = e.currentTarget;
+        container.classList.add('drag-over'); 
+        
+        const afterElement = getDragAfterElement(container, e.clientX, e.clientY);
+        
+        if (afterElement == null) {
+            container.appendChild(draggingElement);
+        } else {
+            container.insertBefore(draggingElement, afterElement);
+        }
+    }
+
+    function handleDragEnter(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+    
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function getDragAfterElement(container, x, y) {
+        const draggableElements = [...container.querySelectorAll('.scramble-block:not(.dragging)')];
+
+        const result = draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const boxCenterY = box.top + box.height / 2;
+            const boxCenterX = box.left + box.width / 2;
+
+            const isCursorBefore = (y < boxCenterY) || 
+                                   (y >= box.top && y <= box.bottom && x < boxCenterX);
+
+            if (isCursorBefore) {
+                const distance = Math.sqrt(Math.pow(x - box.left, 2) + Math.pow(y - box.top, 2));
+
+                if (distance < closest.distance) {
+                    return { distance: distance, element: child };
+                }
+            }
+            
+            return closest;
+            
+        }, { distance: Number.POSITIVE_INFINITY });
+
+        return result.element;
+    }
+    
+    // --- 頁面初始化 (v2.4.1 無變動) ---
     document.addEventListener('DOMContentLoaded', () => {
+        // API 金鑰
         const apiKeyInput = document.getElementById('apiKeyInput');
         const savedApiKey = localStorage.getItem('googleAiApiKey_v2_0');
         if (savedApiKey) {
@@ -1213,12 +1692,31 @@ ${sourceText}`;
         
         loadDataFromLocal();
         renderEditSection();
+        
+        // 語音
         try {
             speechSynth = window.speechSynthesis;
             if (speechSynth.getVoices().length === 0) {
                 speechSynth.onvoiceschanged = () => {};
             }
         } catch (e) { console.error('您的瀏覽器不支援 Web Speech API:', e); }
+        
+        // 綁定遊戲區的拖曳事件
+        const sourceContainer = document.getElementById('scrambleSource');
+        const targetContainer = document.getElementById('scrambleTarget');
+
+        sourceContainer.addEventListener('dragover', handleDragOver);
+        sourceContainer.addEventListener('dragenter', handleDragEnter);
+        sourceContainer.addEventListener('dragleave', handleDragLeave);
+        sourceContainer.addEventListener('drop', handleDrop);
+
+        targetContainer.addEventListener('dragover', handleDragOver);
+        targetContainer.addEventListener('dragenter', handleDragEnter);
+        targetContainer.addEventListener('dragleave', handleDragLeave);
+        targetContainer.addEventListener('drop', handleDrop);
+        
+        // 啟動 Modal 拖曳功能
+        makeModalDraggable('scrambleModal', '.modal-content h3');
     });
 </script>
 </body>
