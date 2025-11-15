@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲教室語詞造句翻翻牌v2.4.1</title>
+    <title>雲教室語詞造句翻翻牌v2.5.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -148,7 +148,8 @@
             border-radius: 1rem;
             margin-bottom: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, height 0.3s ease-in-out;
+            min-height: 150px; /* 增加最小高度以容納載入動畫 */
         }
         #aiSentenceOutput .result-item-content {
             cursor: pointer;
@@ -166,7 +167,20 @@
             font-weight: bold;
             font-size: 1rem;
             margin-bottom: 0.75rem;
+            flex-shrink: 0;
         }
+        .sentence-analysis-prompt {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2563eb; /* blue-600 */
+            text-align: right;
+            padding-left: 1rem;
+            line-height: 1.4;
+        }
+        #customModal .sentence-analysis-prompt {
+            font-size: 1.1rem; /* 放大 Modal 中的提示文字 */
+        }
+        
         #aiSentenceOutput .sentence-text {
             font-size: 1.75rem;
             font-weight: 500;
@@ -229,7 +243,6 @@
             flex-direction: column;
         }
 
-        /* v2.4.0 句子重組遊戲 (Scramble Game) 樣式更新 */
         #scrambleModal .modal-content {
             max-width: 1000px;
             text-align: left;
@@ -340,14 +353,72 @@
         #scrambleTarget .scramble-block {
             padding-right: 1.5rem;
         }
-
+        
+        .scramble-block {
+            border-bottom-width: 4px;
+        }
+        .scramble-block.pos-n { /* 名詞 */
+            background-color: #e0f2fe; /* sky-100 */
+            color: #0c4a6e; /* sky-800 */
+            border-color: #7dd3fc; /* sky-300 */
+        }
+        .scramble-block.pos-v { /* 動詞 */
+            background-color: #dcfce7; /* green-100 */
+            color: #166534; /* green-800 */
+            border-color: #86efac; /* green-300 */
+        }
+        .scramble-block.pos-adj { /* 形容詞 */
+            background-color: #fef3c7; /* yellow-100 */
+            color: #854d0e; /* yellow-800 */
+            border-color: #fde047; /* yellow-400 */
+        }
+        .scramble-block.pos-adv { /* 副詞 */
+            background-color: #f3e8ff; /* purple-100 */
+            color: #581c87; /* purple-800 */
+            border-color: #c084fc; /* purple-400 */
+        }
+        .scramble-block.pos-prep { /* 介詞 */
+            background-color: #ffe4e6; /* red-100 */
+            color: #9f1239; /* red-800 */
+            border-color: #fda4af; /* red-300 */
+        }
+        .scramble-block.pos-conj { /* 連詞 */
+            background-color: #ffedd5; /* orange-100 */
+            color: #9a3412; /* orange-800 */
+            border-color: #fdba74; /* orange-300 */
+        }
+        .scramble-block.pos-part { /* 助詞 */
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #3730a3; /* indigo-800 */
+            border-color: #a5b4fc; /* indigo-300 */
+        }
+        .scramble-block.pos-pron { /* 代名詞 */
+            background-color: #f0fdfa; /* teal-50 */
+            color: #134e4a; /* teal-800 */
+            border-color: #99f6e4; /* teal-200 */
+        }
+        .scramble-block.pos-ono { /* 狀聲詞 */
+            background-color: #fef9c3; /* yellow-50 */
+            color: #a16207; /* yellow-700 */
+            border-color: #facc15; /* yellow-500 */
+        }
+        .scramble-block.pos-punc { /* 標點 */
+            background-color: #f1f5f9; /* slate-100 */
+            color: #334155; /* slate-700 */
+            border-color: #cbd5e1; /* slate-300 */
+        }
+        .scramble-block.pos-default { /* 預設/其他 */
+            background-color: #fafafa; /* gray-50 */
+            color: #111827; /* gray-900 */
+            border-color: #d1d5db; /* gray-300 */
+        }
     </style>
 </head>
 <body class="bg-sky-50 min-h-screen flex items-center justify-center p-4">
 
     <div class="container mx-auto max-w-7xl">
         <header class="text-center mb-8">
-          <h1 id="headerTitle" class="text-4xl md:text-5xl font-bold text-sky-800">🎯 雲教室造句翻翻牌 v2.4.1</h1>
+          <h1 id="headerTitle" class="text-4xl md:text-5xl font-bold text-sky-800">🎯 雲教室造句翻翻牌 v2.5.4</h1>
             <p id="headerSubtitle" class="text-lg text-slate-600 mt-2">點擊卡片翻面，組合無限創意！</p>
         </header>
 
@@ -538,12 +609,11 @@
     <audio id="flipSound" src="https://taira-komori.net/sound_os2/game01/button01a.mp3" preload="auto"></audio>
 
 <script>
-    // v2.4.1 修正語法錯誤
+    // v2.5.4: 修正 v2.5.3 中 getPosClass 函式的 SyntaxError
     const defaultCards = [
         { id: 'person', title: '📌 什麼人物', color: 'bg-rose-400', backColor: 'bg-rose-100', content: ['大雄', '胖虎', '靜香', '哆啦A夢', '小夫', '哥哥', '春天', '皇帝', '員工', '爸爸', '校長', '主任', '老師', '媽媽', '學生', '朋友', '司機', '郵差', '狗狗', '貓咪', '太陽', '月亮', '風', '雨', '電風扇', '火車', '飛機', '椅子', '手機', '書本'], type: 'text' },
         { id: 'time', title: '🕒 什麼時間', color: 'bg-amber-400', backColor: 'bg-amber-100', content: ['早上', '中午', '晚上', '清晨', '半夜', '放學後', '吃飽後', '起床後', '睡覺前', '下課時', '上課時', '假日', '週末', '星期一', '星期五', '寒假', '暑假', '春天', '夏天', '秋天', '冬天', '今天', '昨天', '明天', '剛才', '等一下', '每天', '平常', '早自習', '運動時間'], type: 'text' },
         { id: 'place', title: '📍 什麼地點', color: 'bg-lime-500', backColor: 'bg-lime-100', content: ['公園', '操場', '馬路上', '教室裡', '圖書館', '家裡', '學校', '便利商店', '超市', '餐廳', '廚房', '浴室', '操場邊', '走廊上', '醫院', '車站', '電影院', '百貨公司', '山上', '海邊', '河邊', '動物園', '博物館', '教堂', '校門口', '教務處', '辦公室', '音樂教室', '美術教室', '電腦教室'], type: 'text' },
-        // v2.4.1 修正：將 "type:D:" 修正為 "type:"
         { id: 'action', title: '🏃 什麼動作', color: 'bg-cyan-400', backColor: 'bg-cyan-100', content: ['舉手', '吐舌頭', '拿', '跑', '跳', '笑', '哭', '說話', '打開', '關門', '吃', '喝', '寫字', '畫畫', '唱歌', '打掃', '睡覺', '洗手', '刷牙', '閱讀', '走路', '打球', '丟球', '踢球', '玩耍', '搬東西', '排隊', '點頭', '搖頭', '伸懶腰'], type: 'text' },
         { id: 'event', title: '📖 什麼事情', color: 'bg-violet-400', backColor: 'bg-violet-100', content: ['扮鬼臉', '看書', '跑步', '野餐', '寫功課', '打掃教室', '做實驗', '參加比賽', '幫忙做家事', '玩桌遊', '開會', '舉辦活動', '練習鋼琴', '畫畫', '聽故事', '排隊買東西', '參觀博物館', '考試', '參加早自習', '種花', '澆水', '唱歌表演', '做點心', '露營', '午休', '看電影', '買文具', '騎腳踏車', '做勞作', '上體育課'], type: 'text' },
         { id: 'story', title: '🖼️ 故事卡', color: 'bg-slate-500', backColor: 'bg-slate-200', content: ['https://drive.google.com/thumbnail?sz=w640-h480&id=1dvhq1pscpIJ_fa3E1FM-TEsDiaCGdPDS', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1JyQmlgm2Q2aTy9v5IqaKiqnKrO9ZhzLL', 'https://drive.google.com/thumbnail?sz=w640-h480&id=158-D8boZBhyjCpG-5mB8LlPTbwowP9aI', 'https://drive.google.com/thumbnail?sz=w640-h480&id=16Eg2us4EyhBJkMzkZxmg3u-gf_ctzIS6', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1ZeOc41lClAwaq-9wqFo1o7zQl3o7OJAc', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1w5E17GWnI0tsgHWKM5OUAr7jCKpweU6K', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1EaNhjtbsy0D4SjuuimW6otN2yz5xReS9', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1LDthe2VxEMhGEiqLni_MeQlGdZPbJu_l', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1AsOm5YUKMNLvuU-P5pr1SDZKicBj195l', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1v2ADBteUtvqrdtwQ3_Ywxt0sXia56Ik9', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1QnCwCIBfeJB16pO5ObseonXJ-zwxPgir', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1IWU2-G4L3dTB8x0z9L9ZYhChNrVZW8RG', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1_HBCm2uGrVEqRKxgJxGwevVGhdSfCNVn', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1lM-eCzJKpBflND0JLFzUblXfVfcfuCd8', 'https://drive.google.com/thumbnail?sz=w640-h480&id=14KSvym3_7L4ojcajZ8axa26eD3KUJMnf', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1GBgfQJ0L5w6bkdvGunUj_Vp1_oajD85S', 'https://drive.google.com/thumbnail?sz=w640-h480&id=17mWFv08uM2kTSOEp8R8SkZBZImK-yiVC', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1z9IvfUJr7Wtm9qVzVt0f0PebB3tmU8q1', 'https://drive.google.com/thumbnail?sz=w640-h480&id=1l9EhAq7hl2a_x1_mMBZT961dB6FguILC', 'https://drive.google.com/thumbnail?sz=w640-h480&id=19BSCVubv3klb_q3hfBltXRurIXWCjHT8'], type: 'image' },
@@ -555,6 +625,7 @@
     const flipSound = document.getElementById('flipSound');
     let speechSynth;
     let currentUtterance = null;
+    let lastGenerationParams = null; // v2.5.3: 儲存上次的 AI 生成設定
 
     const customModal = document.getElementById('customModal');
     const modalContent = customModal.querySelector('.modal-content');
@@ -566,9 +637,10 @@
     const scrambleModal = document.getElementById('scrambleModal');
     let currentScrambleSentence = '';
     let currentScramblePattern = '';
-    let correctScrambleBlocks = [];
+    let currentScrambleBlocksJSON = '[]'; 
+    let currentScramblePosTagsJSON = '[]';
 
-    // --- 資料存取 (v2.4.1 無變動) ---
+    // --- 資料存取 ---
     function saveDataToLocal() {
         try {
             localStorage.setItem('sentenceFlipCardData_v2_0', JSON.stringify(cardsData));
@@ -605,7 +677,7 @@
         showAlert('已清除暫存的分析資料。');
     }
 
-    // --- Modal 顯示/隱藏 (v2.4.1 無變動) ---
+    // --- Modal 顯示/隱藏 ---
     function showModal(modalElement) {
         modalElement.classList.remove('hidden');
         modalElement.classList.add('flex');
@@ -614,9 +686,9 @@
         setTimeout(() => {
             if(backdrop) backdrop.style.opacity = '1';
             if(content) {
-                content.dataset.posX = 0;
-                content.dataset.posY = 0;
-                content.style.transform = 'translate(0px, 0px) scale(1)';
+                if(!content.dataset.posX) content.dataset.posX = 0;
+                if(!content.dataset.posY) content.dataset.posY = 0;
+                content.style.transform = `translate(${content.dataset.posX}px, ${content.dataset.posY}px) scale(1)`;
                 content.style.opacity = '1';
             }
         }, 10);
@@ -686,7 +758,7 @@
         showModal(customModal);
     }
     
-    // --- 設定頁面 (v2.4.1 無變動) ---
+    // --- 設定頁面 ---
     function renderEditSection() {
         const editSection = document.getElementById('editSection');
         editSection.innerHTML = '';
@@ -771,7 +843,7 @@
         });
     }
 
-    // --- 遊戲頁面 (v2.4.1 無變動) ---
+    // --- 遊戲頁面 ---
     function renderGameCards() {
         const cardsGrid = document.getElementById('cardsGrid');
         cardsGrid.innerHTML = '';
@@ -877,6 +949,7 @@
             aiBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }
         document.getElementById('aiSentenceOutput').innerHTML = '';
+        lastGenerationParams = null; // v2.5.3: 清除 AI 設定
     }
     
     function openImageModal(src) {
@@ -971,7 +1044,7 @@
         event.target.value = ''; 
     }
     
-    // --- AI 造句 Modal (v2.4.1 無變動) ---
+    // --- AI 造句 Modal ---
     const aiModal = document.getElementById('aiModal');
 
     function toggleStoryDescription(checkboxId) {
@@ -1029,7 +1102,7 @@
 
     function closeAiModal() { hideModal(aiModal); }
     
-    // --- 語音朗讀 (v2.4.1 無變動) ---
+    // --- 語音朗讀 ---
     function speakText(text, targetElementId) {
         if (!speechSynth) {
             showAlert('您的瀏覽器不支援語音朗讀功能。', '❌ 功能不支援');
@@ -1071,15 +1144,23 @@
         speechSynth.speak(utterance);
     }
 
-    // --- 句子放大 Modal (v2.4.1 無變動) ---
-    function showSentenceModal(sentence, pattern) {
+    // --- 句子放大 Modal (v2.5.1 更新) ---
+    function showSentenceModal(sentence, pattern, analysis, blocksJSON, posTagsJSON) {
         modalTitle.textContent = '🔍 詳細句子';
         let messageHtml = '';
+        
         if (pattern) {
-            messageHtml += `<div class="sentence-pattern">格式：【${pattern}】</div>`;
+            messageHtml += `
+            <div class="flex justify-between items-start mb-2">
+                <span class="sentence-pattern">格式：【${pattern}】</span>
+                <span class="sentence-analysis-prompt">${analysis || ''}</span>
+            </div>`;
         }
+        
         const escapedSentence = sentence.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
         const escapedPattern = pattern.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+        const escapedBlocks = blocksJSON.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+        const escapedPosTags = posTagsJSON.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
         const sentenceId = `modal-sentence-${Date.now()}`;
         
         messageHtml += `
@@ -1087,7 +1168,7 @@
                 <p id="${sentenceId}" class="flex-grow text-2xl md:text-3xl font-semibold leading-relaxed text-left">${sentence}</p>
                 <div class="flex flex-col gap-3 flex-shrink-0">
                     <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="sentence-action-btn" title="朗讀句子">🔊</button>
-                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}', '${escapedBlocks}', '${escapedPosTags}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
                 </div>
             </div>
         `;
@@ -1098,58 +1179,70 @@
         showModal(customModal);
     }
     
-    // --- AI 核心 (v2.4.1 無變動) ---
-    async function handleGenerateSentences() {
-        const sentenceOutput = document.getElementById('aiSentenceOutput');
-        const generateBtn = document.getElementById('aiGenerateBtn');
+    // --- AI 核心 (v2.5.3 重大更新) ---
+    
+    /**
+     * v2.5.3: 重新生成單一 AI 句子
+     * @param {string} targetItemId - 要替換內容的 result-item 的 ID
+     */
+    async function handleRegenerateSingleSentence(targetItemId) {
+        const targetItem = document.getElementById(targetItemId);
+        if (!targetItem) {
+            console.error("找不到目標項目:", targetItemId);
+            return;
+        }
+        if (!lastGenerationParams) {
+            showAlert('找不到上次的生成設定，請重新開啟 AI 造句視窗。', '❌ 錯誤');
+            return;
+        }
 
-        generateBtn.disabled = true;
-        generateBtn.innerHTML = `🧠 思考中... <svg class="animate-spin -mr-1 ml-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        // 顯示載入中...
+        const originalHtml = targetItem.innerHTML;
+        targetItem.innerHTML = `
+            <div class="flex items-center justify-center h-full text-slate-500 font-semibold p-10">
+                🧠 重新生成中... 
+                <svg class="animate-spin ml-2 h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        `;
 
-        const patternInput = document.getElementById('aiPatternInput').value.trim();
-        const patternSelect = document.getElementById('aiPatternSelect').value;
-        const finalPattern = patternInput || patternSelect;
-
+        // --- 重建 Prompt (v2.5.3) ---
+        // 從儲存的設定中取出參數
+        const { selectedWords, finalPattern, imageDescriptions, style, targetAudience, wordCount, isShortPhrase } = lastGenerationParams;
+        
         let prompt = '';
-        const selectedWords = [];
-        document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
-            if (cb.dataset.type !== 'image') {
-                selectedWords.push(cb.dataset.content);
-            }
-        });
+        // ** v2.5.3 修改：要求 AI 只回傳 1 個物件**
+        const jsonOutputRequirement = `
+**輸出要求 (極重要)：**
+請**嚴格**以 JSON 格式回覆。回覆一個**只包含 1 個物件**的陣列。該物件必須包含：
+1.  \`sentence\`: (string) 最終生成的完整句子。
+2.  \`analysis\`: (string) 針對「參考句型」的「詞性結構分析」或「語意提示」。
+3.  \`blocks\`: (array of strings) 用於「句子重組遊戲」的**詞塊陣列**。
+4.  \`pos_tags\`: (array of strings) 對應 \`blocks\` 陣列的「詞性標籤陣列」。(\`blocks\` 和 \`pos_tags\` 陣列的長度**必須**完全相同)。
+`;
 
-        if ( (finalPattern.includes('(') && finalPattern.includes(')')) || (finalPattern.includes('（') && finalPattern.includes('）')) ) {
-            prompt = `你是一位專門指導國小學生進行「短語仿寫」的中文老師。你的任務是嚴格依照以下範本短語進行仿寫，並產生 3 個符合規則的結果。\n\n**範本短語：**\n"${finalPattern}"`;
+        if (isShortPhrase) {
+            // ** v2.5.3 修改：要求 AI 產生 1 個結果**
+            prompt = `你是一位專門指導國小學生進行「短語仿寫」的中文老師。你的任務是嚴格依照以下範本短語進行仿寫，並產生 1 個符合規則的結果。\n\n**範本短語：**\n"${finalPattern}"`;
             if (selectedWords.length > 0) {
-                prompt += `\n\n**指定語詞 (必須使用)：**\n請務必在你的仿寫結果中，三句至少有一句使用一個來自清單【${selectedWords.join('、')}】中的有勾選的語詞來替換括號內的內容。(請在語詞通順的許可下，盡量使用勾選的語詞進行照樣造句)`;
+                prompt += `\n\n**指定語詞 (可選用)：**\n請嘗試在你的仿寫結果中，使用一個來自清單【${selectedWords.join('、')}】中的語詞來替換括號內的內容。`;
             }
-            prompt += `\n\n**仿寫規則 (極重要，必須嚴格遵守)：**\n1.  **僅替換詞語：** 你的回覆中，絕對只能替換全形括號「（）」或半形括號 "()" 內的詞語。\n2.  **保留結構：** 括號外的所有文字、符號都必須一字不改地保留在原位。\n3.  **詞性與長度相近：** 替換進括號的新詞語，應和括號內原詞語的「詞性」與「字數」盡量相同，且符合整體句子的前後語意，名詞對應的量詞，還有整體的語句都要符合語詞結構，且有明確意思的句子。\n4.  **保留括號：** 最終輸出的所有仿寫短語都必須保留括號。\n\n**輸出要求：**\n請直接提供三個仿寫短語，每個短語一行，不要包含編號、標題或 any other 說明文字。`;
-        } 
-        else {
-            const imageDescriptions = [];
-            document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
-                if (cb.dataset.type === 'image') {
-                    const desc = document.getElementById(`desc-${cb.id}`)?.value.trim();
-                    if (desc) imageDescriptions.push(desc);
-                }
-            });
-
-            if (selectedWords.length === 0 && !finalPattern) {
-                showAlert('請至少勾選一個語詞，或指定一個句型！', '🤔 請提供造句素材');
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = '🚀 產生句子';
-                return; 
-            }
-
-            const style = document.getElementById('aiStyleSelect').value;
-            const gradeLevel = document.querySelector('input[name="grade"]:checked').value;
-            const wordCount = document.querySelector('input[name="wordCount"]:checked').value;
-            const gradeMap = { low: '低年級', middle: '中年級', high: '高年級' };
-            const targetAudience = gradeMap[gradeLevel];
-
-            prompt = `你是一位「國小造句高手老師」，專門指導 10-12 歲的小學生練習造句。你熟悉國語文教學，擅長以生活化、具啟發性的例句，幫助學生理解並正確運用短語、句型與語詞。造句時會使用常見的語詞，避免生僻的語詞用法，句子生活化，可以讓小學生很好理解。\n\n`;
-            prompt += `**任務：** 請根據以下「核心元素」與「輔助設定」，創作 3 個通順且高品質的例句。\n\n`;
-
+            prompt += `\n\n**仿寫規則 (極重要，必須嚴格遵守)：**\n1.  **僅替換詞語：** 你的回覆中，絕對只能替換全形括號「（）」或半形括號 "()" 內的詞語。\n2.  **保留結構：** 括號外的所有文字、符號都必須一字不改地保留在原位。\n3.  **保留括號：** \`sentence\` 欄位輸出的句子**必須**保留括號。\n`;
+            
+            prompt += jsonOutputRequirement;
+            prompt += `
+**JSON 欄位規則 (短語仿寫)：**
+* \`sentence\`: 必須包含括號。例："（月光）（灑滿）了（海洋）。"
+* \`analysis\`: 針對括號內的詞性分析。例："名詞 + 動詞 + 助詞 + 名詞"
+* \`blocks\`: **不包含**括號，且依語意拆分。例：["月光", "灑滿", "了", "海洋", "。"]
+* \`pos_tags\`: 對應 \`blocks\` 的詞性。例：["名詞", "動詞", "助詞", "名詞", "標點"]
+`;
+        } else {
+            prompt = `你是一位「國小造句高手老師」，專門指導 10-12 歲的小學生練習造句。\n\n`;
+            // ** v2.5.3 修改：要求 AI 創作 1 個例句**
+            prompt += `**任務：** 請根据以下「核心元素」與「輔助設定」，創作 1 個通順且高品質的例句。\n\n`;
             prompt += `--- 核心元素 (必須嚴格遵守) ---\n`;
             if (selectedWords.length > 0) {
                 prompt += `**必須使用的語詞：** "${selectedWords.join('", "')}"\n`;
@@ -1161,7 +1254,189 @@
             if (imageDescriptions.length > 0) {
                 prompt += `**需融入的情境：** "${imageDescriptions.join('", "')}"\n`;
             }
+            prompt += `\n--- 輔助設定 ---\n`;
+            prompt += `**目標年級：** 國小${targetAudience}\n`;
+            prompt += `**句子風格：** ${style}\n`;
+            if (wordCount !== 'unlimited') {
+                switch (wordCount) {
+                    case '15-30': prompt += `**字數要求：** 句子長度約 15 到 30 個字。\n`; break;
+                    case '30+': prompt += `**字數要求：** 句子長度 30 個字以上。\n`; break;
+                }
+            }
+            prompt += `\n--- 行為準則 (極重要！) ---\n`;
+            prompt += `1. **準確性 (最重要)：** 你的造句「必須」完整包含「必須使用的語詞」清單中的「所有」詞語。如果沒有「必須使用的語詞」，則必須正確使用「參考的句型」或圍繞「參考的關鍵詞」來造句。\n`;
+            prompt += `2. **語感自然、貼近生活。**\n`;
+            prompt += `3. **句子不應包含括號。**\n`;
 
+            prompt += jsonOutputRequirement;
+            prompt += `
+**JSON 欄位規則 (一般造句)：**
+* \`sentence\`: **不包含**括號。例："這幅畫凸顯了畫家的技巧。"
+* \`analysis\`: 針對句子的結構分析。
+* \`blocks\`: 必須將句子拆分為 **3 到 7 個「有意義的語義詞塊」**。 (重點語詞/句型關鍵字必須獨立為詞塊)
+* \`pos_tags\`: 對應 \`blocks\` 的詞性。
+`;
+        }
+        // --- Prompt 重建完畢 ---
+
+        try {
+            const resultText = await callGeminiApi(prompt, true);
+            let results = [];
+            try {
+                const cleanedJsonString = resultText.replace(/^```json\s*|```\s*$/g, '');
+                results = JSON.parse(cleanedJsonString);
+            } catch (e) {
+                // 如果 AI 還是回傳純文字
+                results = [{ sentence: resultText, analysis: '', blocks: [], pos_tags: [] }];
+            }
+            
+            // ** v2.5.3 修改：只需要第一個結果**
+            const result = results[0];
+            if (!result) throw new Error("AI 未回傳有效結果。");
+
+            const sentence = result.sentence || "AI 回傳格式錯誤";
+            const analysis = result.analysis || '';
+            const blocks = result.blocks || [];
+            const posTags = result.pos_tags || [];
+            
+            const escapedSentence = sentence.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+            const escapedPattern = finalPattern.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+            const escapedAnalysis = analysis.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+            const escapedBlocks = JSON.stringify(blocks).replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+            const escapedPosTags = JSON.stringify(posTags).replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+            
+            // 產生新的唯一 ID 給朗讀功能
+            const sentenceId = `sentence-output-${Date.now()}`; 
+            
+            // ** v2.5.3 修改：重建卡片 HTML **
+            let itemHtml = '';
+            itemHtml += `<div class="result-item-content" onclick="showSentenceModal('${escapedSentence}', '${escapedPattern}', '${escapedAnalysis}', '${escapedBlocks}', '${escapedPosTags}')">`;
+            
+            if (finalPattern) {
+                itemHtml += `
+                <div class="flex justify-between items-start">
+                    <span class="sentence-pattern">格式：【${finalPattern}】</span>
+                    <span class="sentence-analysis-prompt">${analysis}</span>
+                </div>`;
+            }
+            
+            itemHtml += `<div id="${sentenceId}" class="sentence-text">${sentence}</div>`;
+            itemHtml += `</div>`; // 結束 .result-item-content
+            
+            itemHtml += `<div class="sentence-actions">
+                <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="sentence-action-btn" title="朗讀句子">🔊</button>
+                <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}', '${escapedBlocks}', '${escapedPosTags}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                <button onclick="handleRegenerateSingleSentence('${targetItemId}')" class="sentence-action-btn" title="重新生成此句">🔄</button>
+            </div>`;
+            
+            targetItem.innerHTML = itemHtml; // 替換內容
+
+        } catch (error) {
+            showAlert(`重新生成失敗：${error.message}`, '❌ 錯誤');
+            targetItem.innerHTML = originalHtml; // 發生錯誤時還原
+        }
+    }
+
+
+    async function handleGenerateSentences() {
+        const sentenceOutput = document.getElementById('aiSentenceOutput');
+        const generateBtn = document.getElementById('aiGenerateBtn');
+
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `🧠 思考中... <svg class="animate-spin -mr-1 ml-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+        const patternInput = document.getElementById('aiPatternInput').value.trim();
+        const patternSelect = document.getElementById('aiPatternSelect').value;
+        const finalPattern = patternInput || patternSelect;
+
+        const selectedWords = [];
+        const imageDescriptions = [];
+        document.querySelectorAll('#aiWordSelection input[type=checkbox]:checked').forEach(cb => {
+            if (cb.dataset.type !== 'image') {
+                selectedWords.push(cb.dataset.content);
+            } else {
+                const desc = document.getElementById(`desc-${cb.id}`)?.value.trim();
+                if (desc) imageDescriptions.push(desc);
+            }
+        });
+
+        if (selectedWords.length === 0 && !finalPattern && imageDescriptions.length === 0) {
+            showAlert('請至少勾選一個語詞、指定句型或描述圖片情境！', '🤔 請提供造句素材');
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '🚀 產生句子';
+            return; 
+        }
+
+        const style = document.getElementById('aiStyleSelect').value;
+        const gradeLevel = document.querySelector('input[name="grade"]:checked').value;
+        const wordCount = document.querySelector('input[name="wordCount"]:checked').value;
+        const gradeMap = { low: '低年級', middle: '中年級', high: '高年級' };
+        const targetAudience = gradeMap[gradeLevel];
+        const isShortPhrase = ( (finalPattern.includes('(') && finalPattern.includes(')')) || (finalPattern.includes('（') && finalPattern.includes('）')) );
+
+        // --- v2.5.3: 儲存生成設定 ---
+        lastGenerationParams = {
+            selectedWords: selectedWords,
+            finalPattern: finalPattern,
+            imageDescriptions: imageDescriptions,
+            style: style,
+            targetAudience: targetAudience,
+            wordCount: wordCount,
+            isShortPhrase: isShortPhrase
+        };
+        // --- 結束儲存 ---
+        
+        let prompt = '';
+        // ** v2.5.3 修改：要求 AI 回傳 3 個物件**
+        const jsonOutputRequirement = `
+**輸出要求 (極重要)：**
+請**嚴格**以 JSON 格式回覆。回覆一個包含 3 個物件的陣列。每個物件必須包含：
+1.  \`sentence\`: (string) 最終生成的完整句子。
+2.  \`analysis\`: (string) 針對「參考句型」的「詞性結構分析」或「語意提示」。
+3.  \`blocks\`: (array of strings) 用於「句子重組遊戲」的**詞塊陣列**。
+4.  \`pos_tags\`: (array of strings) 對應 \`blocks\` 陣列的「詞性標籤陣列」。(\`blocks\` 和 \`pos_tags\` 陣列的長度**必須**完全相同)。
+`;
+
+        if (isShortPhrase) {
+            prompt = `你是一位專門指導國小學生進行「短語仿寫」的中文老師。你的任務是嚴格依照以下範本短語進行仿寫，並產生 3 個符合規則的結果。\n\n**範本短語：**\n"${finalPattern}"`;
+            if (selectedWords.length > 0) {
+                prompt += `\n\n**指定語詞 (必須使用)：**\n請務必在你的仿寫結果中，三句至少有一句使用一個來自清單【${selectedWords.join('、')}】中的有勾選的語詞來替換括號內的內容。`;
+            }
+            prompt += `\n\n**仿寫規則 (極重要，必須嚴格遵守)：**\n1.  **僅替換詞語：** 你的回覆中，絕對只能替換全形括號「（）」或半形括號 "()" 內的詞語。\n2.  **保留結構：** 括號外的所有文字、符號都必須一字不改地保留在原位。\n3.  **保留括號：** \`sentence\` 欄位輸出的句子**必須**保留括號。\n`;
+            
+            prompt += jsonOutputRequirement;
+            prompt += `
+**JSON 欄位規則 (短語仿寫)：**
+* \`sentence\`: 必須包含括號。例："（月光）（灑滿）了（海洋）。"
+* \`analysis\`: 針對括號內的詞性分析。例："名詞 + 動詞 + 助詞 + 名詞"
+* \`blocks\`: **不包含**括號，且依語意拆分。例：["月光", "灑滿", "了", "海洋", "。"]
+* \`pos_tags\`: 對應 \`blocks\` 的詞性。例：["名詞", "動詞", "助詞", "名詞", "標點"]
+
+**JSON 範例：**
+[
+  {
+    "sentence": "（月光）（灑滿）了（海洋）。",
+    "analysis": "名詞 + 動詞 + 助詞 + 名詞",
+    "blocks": ["月光", "灑滿", "了", "海洋", "。"],
+    "pos_tags": ["名詞", "動詞", "助詞", "名詞", "標點"]
+  }
+]
+`;
+        } 
+        else {
+            prompt = `你是一位「國小造句高手老師」，專門指導 10-12 歲的小學生練習造句。你熟悉國語文教學，擅長以生活化、具啟發性的例句，幫助學生理解並正確運用短語、句型與語詞。\n\n`;
+            prompt += `**任務：** 請根據以下「核心元素」與「輔助設定」，創作 3 個通順且高品質的例句。\n\n`;
+            prompt += `--- 核心元素 (必須嚴格遵守) ---\n`;
+            if (selectedWords.length > 0) {
+                prompt += `**必須使用的語詞：** "${selectedWords.join('", "')}"\n`;
+            }
+            if (finalPattern) {
+                const patternType = (finalPattern.includes('...')) ? '句型' : '關鍵詞';
+                prompt += `**參考的${patternType}：** "${finalPattern}"\n`;
+            }
+            if (imageDescriptions.length > 0) {
+                prompt += `**需融入的情境：** "${imageDescriptions.join('", "')}"\n`;
+            }
             prompt += `\n--- 輔助設定 ---\n`;
             prompt += `**目標年級：** 國小${targetAudience}\n`;
             prompt += `**句子風格：** ${style}\n`;
@@ -1171,41 +1446,97 @@
                     case '30+': prompt += `**字數要求：** 每個句子長度 30 個字以上。\n`; break;
                 }
             }
-
             prompt += `\n--- 行為準則 (極重要！) ---\n`;
             prompt += `1. **準確性 (最重要)：** 你的造句「必須」完整包含「必須使用的語詞」清單中的「所有」詞語。如果沒有「必須使用的語詞」，則必須正確使用「參考的句型」或圍繞「參考的關鍵詞」來造句。\n`;
             prompt += `2. **語感自然、貼近生活：** 句子要像國小${targetAudience}學生會說或寫的話，避免艱深詞彙或成人語氣。\n`;
-            prompt += `3. **內容正面、具啟發性：** 句子內容應盡量正面、生活化、有意義。\n`;
-            prompt += `\n**輸出要求：** 請直接提供三個句子，每個句子以換行符號分隔，不要包含編號、標題或任何其他額外文字。`;
+            prompt += `3. **(v2.5.1 修正) 句子不應包含括號：** \`sentence\` 欄位輸出的句子**不應該**包含任何 \`()\` 或 \`（）\`。\n`;
+
+            prompt += jsonOutputRequirement;
+            prompt += `
+**JSON 欄位規則 (一般造句)：**
+* \`sentence\`: **不包含**括號。例："這幅畫凸顯了畫家的技巧。"
+* \`analysis\`: 針對句子的結構分析。例："名詞 + 動詞 + 助詞 + 名詞"
+* \`blocks\`: **(v2.5.1 修正)** 必須將句子拆分為 **3 到 7 個「有意義的語義詞塊」**。
+    * (重點語詞) 如果是「語詞造句」(如 "凸顯")，該「語詞」**必須**自己獨立為一個詞塊。
+    * (重點語詞) 如果是「句型造句」(如 "除了...也..."), \`除了\` 和 \`也\` **必須**各自獨立為一個詞塊。
+    * 例 1 (語詞)："這幅畫凸顯了畫家的技巧。" -> \`blocks\` 應為：["這幅畫", "凸顯", "了", "畫家的技巧", "。"]
+    * 例 2 (句型)："他除了功課很好，也很會運動。" -> \`blocks\` 應為：["他", "除了", "功課很好", "，", "也", "很會運動", "。"]
+* \`pos_tags\`: 對應 \`blocks\` 的詞性。
+
+**JSON 範例：**
+[
+  {
+    "sentence": "這幅畫凸顯了畫家的精湛技巧。",
+    "analysis": "名詞 + 動詞 + 助詞 + 名詞",
+    "blocks": ["這幅畫", "凸顯", "了", "畫家的精湛技巧", "。"],
+    "pos_tags": ["名詞", "動詞", "助詞", "名詞", "標點"]
+  }
+]
+`;
         }
 
         try {
-            const resultText = await callGeminiApi(prompt);
-            const sentences = resultText.split('\n').filter(s => s.trim() !== '');
+            const resultText = await callGeminiApi(prompt, true); 
+            let results = [];
+
+            try {
+                const cleanedJsonString = resultText.replace(/^```json\s*|```\s*$/g, '');
+                results = JSON.parse(cleanedJsonString);
+                if (!Array.isArray(results) || results.length === 0) throw new Error("JSON 格式不符，並非陣列或為空。");
+            } catch (e) {
+                console.error("AI 未回傳有效 JSON，將嘗試純文字解析:", e, resultText);
+                const sentences = resultText.split('\n').filter(s => s.trim() !== '');
+                results = sentences.map(s => ({
+                    sentence: s,
+                    analysis: '', 
+                    blocks: [], 
+                    pos_tags: []  
+                }));
+            }
 
             closeAiModal();
             sentenceOutput.innerHTML = `<h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">✨ AI 造句結果 (點擊可放大) ✨</h3>`;
             
-            sentences.forEach((sentence, index) => {
+            results.forEach((result, index) => {
+                const sentence = result.sentence || "AI 回傳格式錯誤";
+                const analysis = result.analysis || '';
+                const blocks = result.blocks || [];
+                const posTags = result.pos_tags || [];
+                
+                // --- v2.5.3: 賦予卡片唯一的 ID ---
+                const parentItemId = `result-item-${Date.now() + index}`;
                 const resultItem = document.createElement('div');
                 resultItem.className = 'result-item';
+                resultItem.id = parentItemId; // 設定卡片 ID
                 
                 const escapedSentence = sentence.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
                 const escapedPattern = finalPattern.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
-                const sentenceId = `sentence-output-${index}`;
+                const escapedAnalysis = analysis.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+                const escapedBlocks = JSON.stringify(blocks).replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+                const escapedPosTags = JSON.stringify(posTags).replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+                
+                const sentenceId = `sentence-output-${index}`; // 朗讀用的 ID
 
                 let itemHtml = '';
                 
-                itemHtml += `<div class="result-item-content" onclick="showSentenceModal('${escapedSentence}', '${escapedPattern}')">`;
+                itemHtml += `<div class="result-item-content" onclick="showSentenceModal('${escapedSentence}', '${escapedPattern}', '${escapedAnalysis}', '${escapedBlocks}', '${escapedPosTags}')">`;
+                
                 if (finalPattern) {
-                    itemHtml += `<div class="sentence-pattern">格式：【${finalPattern}】</div>`;
+                    itemHtml += `
+                    <div class="flex justify-between items-start">
+                        <span class="sentence-pattern">格式：【${finalPattern}】</span>
+                        <span class="sentence-analysis-prompt">${analysis}</span>
+                    </div>`;
                 }
+                
                 itemHtml += `<div id="${sentenceId}" class="sentence-text">${sentence}</div>`;
                 itemHtml += `</div>`;
                 
+                // --- v2.5.3: 新增重新生成按鈕 ---
                 itemHtml += `<div class="sentence-actions">
                     <button onclick="speakText('${escapedSentence}', '${sentenceId}')" class="sentence-action-btn" title="朗讀句子">🔊</button>
-                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                    <button onclick="openScrambleGame('${escapedSentence}', '${escapedPattern}', '${escapedBlocks}', '${escapedPosTags}')" class="sentence-action-btn" title="句子重組遊戲">🧩</button>
+                    <button onclick="handleRegenerateSingleSentence('${parentItemId}')" class="sentence-action-btn" title="重新生成此句">🔄</button>
                 </div>`;
                 
                 resultItem.innerHTML = itemHtml;
@@ -1215,13 +1546,14 @@
 
         } catch (error) {
             showAlert(`糟糕！AI 造句失敗了：${error.message}`, '❌ 錯誤');
+            lastGenerationParams = null; // 失敗時清除
         } finally {
             generateBtn.disabled = false;
             generateBtn.textContent = '🚀 重新產生';
         }
     }
     
-    // --- AI 詞彙生成 (v2.4.1 無變動) ---
+    // --- AI 詞彙生成 (v2.5.1 修正) ---
     async function handleAiWordGeneration(cardId) {
         const card = cardsData.find(c => c.id === cardId);
         if (!card) return;
@@ -1233,11 +1565,15 @@
             aiBtn.disabled = true;
 
             const categoryName = card.title.replace(/[^a-zA-Z\u4e00-\u9fa5]/g, '').trim();
-            const prompt = `你是一位國小老師，請為「${categoryName}」這個造句類別，隨機產生 10 個適合國小學生的詞語。請直接用換行符號分隔，不要有標題、編號或任何說明文字。`;
+            const prompt = `你是一位國小老師，請為「${categoryName}」這個造句類別，隨機產生 10 個適合國小學生的詞語。
+**輸出要求：** 請直接用換行符號分隔。**絕對不要**包含任何標題、編號 (如 1., 2.)、項目符號 (如 -, *) 或任何說明文字。`;
 
             try {
-                const resultText = await callGeminiApi(prompt);
-                const newWords = resultText.split('\n').map(w => w.trim()).filter(w => w);
+                const resultText = await callGeminiApi(prompt); 
+                const newWords = resultText.split('\n')
+                    .map(w => w.replace(/^[0-9]+\.\s*|^[-*]\s*/, '').trim()) 
+                    .filter(w => w);
+                
                 card.content = newWords;
                 saveDataToLocal();
                 rerenderCardList(cardId);
@@ -1251,7 +1587,7 @@
         });
     }
 
-    // --- AI 分析 Modal (v2.4.1 無變動) ---
+    // --- AI 分析 Modal ---
     function openAnalysisModal() {
         loadAnalysisDataFromLocal();
         const importSelect = document.getElementById('analysisImportSelect');
@@ -1380,8 +1716,12 @@ ${sourceText}`;
         });
     }
     
-    // --- Gemini API 呼叫 (v2.4.1 無變動) ---
-    async function callGeminiApi(prompt) {
+    // --- Gemini API 呼叫 (v2.5.2 修正) ---
+    /**
+     * @param {string} prompt - 傳送給 AI 的提示
+     * @param {boolean} requestJson - 是否要求 AI 回傳 JSON 格式 (預設為 false)
+     */
+    async function callGeminiApi(prompt, requestJson = false) {
         const apiKey = document.getElementById('apiKeyInput').value.trim();
         
         if (!apiKey) {
@@ -1390,7 +1730,12 @@ ${sourceText}`;
         
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
-        const payload = { contents: [{ parts: [{ text: prompt }] }] };
+        const payload = { 
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: requestJson ? "application/json" : "text/plain",
+            }
+        };
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1412,7 +1757,7 @@ ${sourceText}`;
         }
     }
 
-    // --- 可拖曳的 Modal (v2.4.1 無變動) ---
+    // --- 可拖曳的 Modal ---
     function makeModalDraggable(modalId, headerSelector) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -1474,30 +1819,60 @@ ${sourceText}`;
     }
 
 
-    // --- 句子重組遊戲 (v2.4.1 無變動) ---
+    // --- 句子重組遊戲 (v2.5.1 更新) ---
 
     function escapeRegExp(string) {
         return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     }
 
-    function splitSentence(sentence, pattern) {
+    function getPosClass(posTag) {
+        if (!posTag) return 'pos-default';
+        const tag = posTag.toLowerCase();
+        
+        if (tag.includes('名詞')) return 'pos-n';
+        if (tag.includes('動詞')) return 'pos-v';
+        if (tag.includes('形容詞')) return 'pos-adj';
+        if (tag.includes('副詞')) return 'pos-adv';
+        if (tag.includes('介詞') || tag.includes('介系詞')) return 'pos-prep';
+        
+        // --- v2.5.4: 修正此處的 SyntaxError ---
+        if (tag.includes('連詞') || tag.includes('連接詞')) return 'pos-conj';
+        
+        if (tag.includes('助詞') || tag.includes('語助詞')) return 'pos-part'; 
+        if (tag.includes('代名詞') || tag.includes('代詞')) return 'pos-pron';
+        if (tag.includes('狀聲詞') || tag.includes('擬聲詞')) return 'pos-ono'; 
+        if (tag.includes('標點') || tag.includes('符號')) return 'pos-punc';
+        
+        if (['了', '的', '著', '個', '地', '得'].includes(tag)) return 'pos-part';
+        if (['上', '下', '裡', '外', '前', '後'].includes(tag)) return 'pos-prep';
+        
+        return 'pos-default';
+    }
+
+
+    /**
+     * v2.5.1: 此函式 'fallback_splitSentence' 僅作為 AI 回傳資料失敗時的「備用方案」。
+     */
+    function fallback_splitSentence(sentence, pattern) {
+        console.warn("正在啟用 Fallback 句子拆分邏輯...");
         let blocks = [];
         const basePunctuation = '，。？！、：；';
-        const bracketPunctuation = '「」『』（）()';
+        const bracketPunctuation = '「」『』';
         const punctuationRegex = new RegExp(`([${escapeRegExp(basePunctuation + bracketPunctuation)}])`, 'g');
         const finalPunctuationRegex = new RegExp(`[${escapeRegExp('。？！')}]$`);
         
-        if (pattern && (pattern.includes('(') || pattern.includes('（'))) {
-            blocks = sentence.split(/([（）()])/g).filter(s => s.trim() !== '');
-            
-        } else if (pattern && pattern.includes('...')) {
+        if (/[()（）]/.test(sentence)) {
+            blocks = sentence.split(/[()（）]/g).filter(s => s.trim() !== '');
+        } 
+        else if (pattern && pattern.includes('...')) {
             let keywords = pattern.split('...').filter(s => s.trim() !== '');
             let allSeparators = [...keywords, ...basePunctuation.split('')];
             let uniqueSeparators = [...new Set(allSeparators)];
             let regex = new RegExp(`(${uniqueSeparators.map(escapeRegExp).join('|')})`, 'g');
             blocks = sentence.split(regex).filter(s => s.trim() !== '');
             
-        } else {
+        } 
+        else {
             blocks = sentence.split(punctuationRegex).filter(s => s.trim() !== '');
         }
 
@@ -1514,12 +1889,38 @@ ${sourceText}`;
         return finalBlocks.filter(s => s.trim() !== '');
     }
 
-    function openScrambleGame(sentence, pattern) {
+    /**
+     * v2.5.1 更新: 增加 blocksJSON, posTagsJSON 參數
+     */
+    function openScrambleGame(sentence, pattern, blocksJSON, posTagsJSON) {
         currentScrambleSentence = sentence;
         currentScramblePattern = pattern;
-        correctScrambleBlocks = splitSentence(sentence, pattern);
+        currentScrambleBlocksJSON = blocksJSON || '[]'; 
+        currentScramblePosTagsJSON = posTagsJSON || '[]';
         
-        let shuffledBlocks = [...correctScrambleBlocks].sort(() => Math.random() - 0.5);
+        let correctScrambleBlocks = [];
+        let posTags = [];
+        
+        try {
+            correctScrambleBlocks = JSON.parse(blocksJSON);
+        } catch(e) { console.error('無法解析 Blocks JSON:', e); }
+        
+        try {
+            posTags = JSON.parse(posTagsJSON);
+        } catch(e) { console.error('無法解析 POS Tags JSON:', e); }
+
+        if (!correctScrambleBlocks || correctScrambleBlocks.length === 0 || correctScrambleBlocks.length !== posTags.length) {
+            console.warn("AI 提供的 blocks 和 pos_tags 不匹配或為空，啟用 fallback 拆分邏輯。");
+            correctScrambleBlocks = fallback_splitSentence(sentence, pattern);
+            posTags = []; 
+        }
+        
+        let blockObjects = correctScrambleBlocks.map((text, index) => ({
+            text: text,
+            pos: (posTags && posTags[index]) ? getPosClass(posTags[index]) : 'pos-default'
+        }));
+        
+        let shuffledBlockObjects = [...blockObjects].sort(() => Math.random() - 0.5);
 
         const sourceContainer = document.getElementById('scrambleSource');
         const targetContainer = document.getElementById('scrambleTarget');
@@ -1531,14 +1932,14 @@ ${sourceText}`;
         hintBox.classList.add('hidden');
         hintBox.textContent = '';
 
-        shuffledBlocks.forEach((blockText, index) => {
+        shuffledBlockObjects.forEach((blockObj, index) => {
             const block = document.createElement('div');
             block.id = `scramble-block-${index}`;
-            block.className = 'scramble-block';
+            block.className = `scramble-block ${blockObj.pos}`;
             block.draggable = true;
             
             const textSpan = document.createElement('span');
-            textSpan.textContent = blockText;
+            textSpan.textContent = blockObj.text;
             
             const removeBtn = document.createElement('button');
             removeBtn.className = 'scramble-remove-btn';
@@ -1571,7 +1972,7 @@ ${sourceText}`;
     }
     
     function resetScrambleGame() {
-        openScrambleGame(currentScrambleSentence, currentScramblePattern);
+        openScrambleGame(currentScrambleSentence, currentScramblePattern, currentScrambleBlocksJSON, currentScramblePosTagsJSON);
     }
     
     function checkScrambleAnswer() {
@@ -1581,7 +1982,9 @@ ${sourceText}`;
         
         targetContainer.classList.remove('is-correct', 'is-incorrect');
 
-        if (userAnswer === currentScrambleSentence) {
+        const targetSentence = currentScrambleSentence.replace(/[()（）]/g, '');
+
+        if (userAnswer === targetSentence) {
             targetContainer.classList.add('is-correct');
             showAlert('太棒了！句子完全正確！', '✔️ 答對了');
         } else {
@@ -1600,7 +2003,7 @@ ${sourceText}`;
         }
     }
 
-    // --- 拖曳 (Drag & Drop) 邏輯 (v2.4.1 無變動) ---
+    // --- 拖曳 (Drag & Drop) 邏輯 ---
     
     let draggingElement = null;
     
@@ -1677,7 +2080,7 @@ ${sourceText}`;
         return result.element;
     }
     
-    // --- 頁面初始化 (v2.4.1 無變動) ---
+    // --- 頁面初始化 ---
     document.addEventListener('DOMContentLoaded', () => {
         // API 金鑰
         const apiKeyInput = document.getElementById('apiKeyInput');
